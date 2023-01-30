@@ -1,36 +1,23 @@
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
+#include <driver/gpio.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
-#define BLINK_GPIO GPIO_NUM_2
+#define LED_PIN 2
 
-static uint8_t s_led_state = 0;
-
-
-static void configure_led(void)
+void led_blink(void *pvParams)
 {
-    gpio_reset_pin(BLINK_GPIO);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
-}
-
-static void blink_led(void)
-{
-    /* Set the GPIO level according to the state (LOW or HIGH)*/
-    gpio_set_level(BLINK_GPIO, s_led_state);
-}
-
-void app_main(void)
-{
-    /* Configure the peripheral according to the LED type */
-    configure_led();
-
-    while (1) {
-        blink_led();
-        /* Toggle the LED state */
-        s_led_state = !s_led_state;
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    gpio_pad_select_gpio(LED_PIN);
+    gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
+    while (1)
+    {
+        gpio_set_level(LED_PIN, 0);
+        vTaskDelay(1000 / portTICK_RATE_MS);
+        gpio_set_level(LED_PIN, 1);
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 }
 
+void app_main()
+{
+    xTaskCreate(&led_blink, "LED_BLINK", 512, NULL, 5, NULL);
+}
